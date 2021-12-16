@@ -5,6 +5,7 @@
 
       <template v-for="(answer, indice) in this.answers" :key="indice">
         <input
+          :disabled="this.answerSubmitted"
           type="radio"
           :id="indice"
           name="options"
@@ -16,7 +17,35 @@
       </template>
     </template>
 
-    <button class="send" type="button" @click="submitAnswer()">Send</button>
+    <button
+      v-if="!this.answerSubmitted"
+      class="send"
+      type="button"
+      @click="submitAnswer()"
+    >
+      Send
+    </button>
+
+    <section v-if="this.answerSubmitted" class="result">
+      <h4
+        v-if="this.chosenAnswer == this.correctAnswer"
+        v-html="
+          '&#9989; Crongatulations, the answer ' +
+          this.correctAnswer +
+          ' is correct.'
+        "
+      ></h4>
+      <h4
+        v-else
+        v-html="
+          '&#10060; sorry, you picked the wrong answer. The correct answer is ' +
+          this.correctAnswer
+        "
+      ></h4>
+      <button class="send" type="button" @click="getNewQuestion()">
+        Next question
+      </button>
+    </section>
   </div>
 </template>
 
@@ -30,7 +59,8 @@ export default {
       question: undefined,
       incorrectAnswers: undefined,
       correctAnswer: undefined,
-      chosenAnswer: undefined
+      chosenAnswer: undefined,
+      answerSubmitted: false
     }
   },
 
@@ -39,12 +69,27 @@ export default {
       if (!this.chosenAnswer) {
         alert('Pick one of the options')
       } else {
+        this.answerSubmitted = true
         if (this.chosenAnswer == this.correctAnswer) {
-          alert('You got it right!')
+          console.log('You got it right!')
         } else {
-          alert('You got it wrong!')
+          console.log('You got it wrong!')
         }
       }
+    },
+    getNewQuestion() {
+      this.answerSubmitted = false
+      this.chosenAnswer = undefined
+      this.question = undefined
+
+      this.axios
+        .get('https://opentdb.com/api.php?amount=1&category=15')
+        .then((response) => {
+          const data = response.data.results[0]
+          this.question = data.question
+          this.incorrectAnswers = data.incorrect_answers
+          this.correctAnswer = data.correct_answer
+        })
     }
   },
 
@@ -61,14 +106,7 @@ export default {
   },
 
   created() {
-    this.axios
-      .get('https://opentdb.com/api.php?amount=1&category=15')
-      .then((response) => {
-        const data = response.data.results[0]
-        this.question = data.question
-        this.incorrectAnswers = data.incorrect_answers
-        this.correctAnswer = data.correct_answer
-      })
+    this.getNewQuestion()
   }
 }
 </script>
