@@ -1,17 +1,22 @@
 <template>
   <div>
-    <h1>
-      Microphones can be used not only to pick up soung, but also to project
-      sound similar to a speaker.
-    </h1>
+    <template v-if="this.question">
+      <h1 v-html="this.question" />
 
-    <input type="radio" name="options" value="true" />
-    <label for="option">True</label> <br />
+      <template v-for="(answer, indice) in this.answers" :key="indice">
+        <input
+          type="radio"
+          :id="indice"
+          name="options"
+          :value="answer"
+          v-model="this.chosenAnswer"
+        />
+        <label :for="indice" v-html="answer" />
+        <br />
+      </template>
+    </template>
 
-    <input type="radio" name="options" value="false" />
-    <label for="option">False</label><br />
-
-    <button class="send" type="button">Send</button>
+    <button class="send" type="button" @click="submitAnswer()">Send</button>
   </div>
 </template>
 
@@ -21,13 +26,48 @@ export default {
   name: 'App',
 
   data() {
-    return {}
+    return {
+      question: undefined,
+      incorrectAnswers: undefined,
+      correctAnswer: undefined,
+      chosenAnswer: undefined
+    }
   },
+
+  methods: {
+    submitAnswer() {
+      if (!this.chosenAnswer) {
+        alert('Pick one of the options')
+      } else {
+        if (this.chosenAnswer == this.correctAnswer) {
+          alert('You got it right!')
+        } else {
+          alert('You got it wrong!')
+        }
+      }
+    }
+  },
+
+  computed: {
+    answers() {
+      const answers = JSON.parse(JSON.stringify(this.incorrectAnswers))
+      answers.splice(
+        Math.round(Math.random() * answers.length),
+        0,
+        this.correctAnswer
+      )
+      return answers
+    }
+  },
+
   created() {
     this.axios
       .get('https://opentdb.com/api.php?amount=1&category=15')
       .then((response) => {
-        console.log(response.data)
+        const data = response.data.results[0]
+        this.question = data.question
+        this.incorrectAnswers = data.incorrect_answers
+        this.correctAnswer = data.correct_answer
       })
   }
 }
